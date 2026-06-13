@@ -15,10 +15,12 @@ const port = Number(process.env.WALLET_PORT ?? DEFAULT_PORT);
 
 log.info("Starting service", { port, nodeEnv });
 
+import { registerRoutes } from "./routes.js";
+
 startHttpServer({
   port,
   serviceName: SERVICE_NAME,
-  routes: [],
+  routes: registerRoutes(),
 });
 
 // TODO: Wire routes, database, and domain logic
