@@ -16,10 +16,14 @@
   "dependencies": {
     "@delego/types": "workspace:*",
     "@delego/utils": "workspace:*",
-    "@stellar/stellar-sdk": "^15.1.0"
+    "@stellar/stellar-sdk": "^15.1.0",
+    "bullmq": "^5.78.1",
+    "ioredis": "^5.11.1"
   },
   "devDependencies": {
+    "@types/ioredis-mock": "^8.2.7",
     "@types/node": "^22.0.0",
+    "ioredis-mock": "^8.13.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
