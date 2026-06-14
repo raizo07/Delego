@@ -4,7 +4,8 @@
     "outDir": "./dist",
     "rootDir": ".",
     "lib": [
-      "ES2022"
+      "ES2022",
+      "dom"
     ],
     "types": [
       "node"
