@@ -1,5 +1,7 @@
 import { describe, it, before, after, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
+import * as path from "node:path";
+import * as fs from "node:fs/promises";
 import { Horizon, rpc, Keypair, StrKey, xdr } from "@stellar/stellar-sdk";
 import { 
   addTransactionToQueue, 
@@ -45,6 +47,7 @@ describe("Wallet Transaction Queue & Sequence Sync", () => {
     // Enable MockRedis mode for the queue connection
     process.env.MOCK_REDIS = "true";
     process.env.NODE_ENV = "test";
+    process.env.VAULT_FILE_PATH = path.join(process.cwd(), "data", "vault_txQueue.json");
 
     // Backup original Stellar SDK prototypes/methods
     originalLoadAccount = Horizon.Server.prototype.loadAccount;
@@ -73,8 +76,16 @@ describe("Wallet Transaction Queue & Sequence Sync", () => {
       throw new Error("getTransactionMock not set");
     };
 
-    // Seed test key in vault
-    await vaultService.storeKey(testPub, testSec);
+    // Seed test key in vault with verification
+    try {
+      await vaultService.storeKey(testPub, testSec);
+      const storedKey = await vaultService.getKey(testPub);
+      if (!storedKey) {
+        throw new Error("Key was stored but cannot be retrieved from vault");
+      }
+    } catch (error) {
+      throw new Error(`Failed to initialize vault with test key: ${error.message}`);
+    }
   });
 
   after(async () => {
@@ -85,6 +96,15 @@ describe("Wallet Transaction Queue & Sequence Sync", () => {
     rpc.Server.prototype.getTransaction = originalGet;
 
     await closeQueue();
+
+    // Clean up temporary vault file
+    try {
+      if (process.env.VAULT_FILE_PATH) {
+        await fs.rm(process.env.VAULT_FILE_PATH, { force: true });
+      }
+    } catch (err) {
+      // Ignore
+    }
   });
 
   beforeEach(async () => {

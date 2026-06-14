@@ -5,7 +5,6 @@ import { createLogger } from "@delego/utils";
 
 const log = createLogger("wallet:vault", process.env.LOG_LEVEL ?? "info");
 
-const VAULT_FILE_PATH = path.join(process.cwd(), "data", "vault.json");
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
 const SALT_LENGTH = 16;
@@ -36,10 +35,15 @@ export class VaultService {
     });
   }
 
+  private getVaultPath(): string {
+    return process.env.VAULT_FILE_PATH ?? path.join(process.cwd(), "data", "vault.json");
+  }
+
   private async loadVault(): Promise<void> {
     try {
-      await fs.mkdir(path.dirname(VAULT_FILE_PATH), { recursive: true });
-      const data = await fs.readFile(VAULT_FILE_PATH, "utf-8");
+      const vaultPath = this.getVaultPath();
+      await fs.mkdir(path.dirname(vaultPath), { recursive: true });
+      const data = await fs.readFile(vaultPath, "utf-8");
       this.vaultData = JSON.parse(data);
     } catch (err: any) {
       if (err.code === "ENOENT") {
@@ -53,8 +57,9 @@ export class VaultService {
 
   private async saveVault(): Promise<void> {
     try {
-      await fs.mkdir(path.dirname(VAULT_FILE_PATH), { recursive: true });
-      await fs.writeFile(VAULT_FILE_PATH, JSON.stringify(this.vaultData, null, 2), "utf-8");
+      const vaultPath = this.getVaultPath();
+      await fs.mkdir(path.dirname(vaultPath), { recursive: true });
+      await fs.writeFile(vaultPath, JSON.stringify(this.vaultData, null, 2), "utf-8");
     } catch (err: any) {
       log.error("Failed to save vault data", { error: err.message });
       throw err;

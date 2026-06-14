@@ -6,26 +6,15 @@ import { vaultService } from "../../../services/wallet/dist/src/vault.js";
 import { accountService } from "../../../services/wallet/dist/stellar/account.js";
 
 describe("Wallet Service & Vault", () => {
-  const vaultDir = path.join(process.cwd(), "../../services/wallet/data");
-  const vaultFile = path.join(vaultDir, "vault.json");
-  let backupVaultData = null;
-
   before(async () => {
-    // Back up existing vault file if it exists
-    try {
-      backupVaultData = await fs.readFile(vaultFile, "utf-8");
-    } catch (err) {
-      // Ignore if file doesn't exist
-    }
+    process.env.VAULT_FILE_PATH = path.join(process.cwd(), "data", "vault_wallet.json");
   });
 
   after(async () => {
-    // Restore vault backup
+    // Clean up temporary vault file
     try {
-      if (backupVaultData !== null) {
-        await fs.writeFile(vaultFile, backupVaultData, "utf-8");
-      } else {
-        await fs.rm(vaultFile, { force: true });
+      if (process.env.VAULT_FILE_PATH) {
+        await fs.rm(process.env.VAULT_FILE_PATH, { force: true });
       }
     } catch (err) {
       // Ignore
