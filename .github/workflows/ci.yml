@@ -60,7 +60,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared packages and services
-        run: pnpm --filter "./packages/*" --filter "./services/*" build
+        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./apps/frontend" --filter "./agents" build
 
       - name: Run type check
         run: pnpm typecheck
@@ -88,7 +88,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build shared packages and services
-        run: pnpm --filter "./packages/*" --filter "./services/*" build
+        run: pnpm --filter "./packages/*" --filter "./apps/backend/*" --filter "./apps/frontend" --filter "./agents" build
 
       - name: Run tests
         run: pnpm test
