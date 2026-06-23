@@ -118,3 +118,81 @@ export class VaultService {
 }
 
 export const vaultService = new VaultService();
+
+export interface EncryptedSeedPhrase {
+  ciphertext: string;
+  iv: string;
+  authTag: string;
+  keyVersion: string;
+  algorithm: "aes-256-gcm";
+}
+
+export function encryptSeedPhrase(
+  plainText: string,
+  masterKey: string
+): { cipherText: string; iv: string; tag: string } {
+  if (!plainText) {
+    throw new Error("Plaintext cannot be empty");
+  }
+  if (!masterKey) {
+    throw new Error("Master key cannot be empty");
+  }
+
+  const key = crypto.createHash("sha256").update(masterKey).digest();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+
+  let encrypted = cipher.update(plainText, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  const tag = cipher.getAuthTag().toString("hex");
+
+  return {
+    cipherText: encrypted,
+    iv: iv.toString("hex"),
+    tag: tag,
+  };
+}
+
+export function decryptSeedPhrase(
+  cipherText: string,
+  iv: string,
+  tag: string,
+  masterKey: string
+): string {
+  if (!cipherText) {
+    throw new Error("Ciphertext cannot be empty");
+  }
+  if (!iv) {
+    throw new Error("IV cannot be empty");
+  }
+  if (!tag) {
+    throw new Error("Tag cannot be empty");
+  }
+  if (!masterKey) {
+    throw new Error("Master key cannot be empty");
+  }
+
+  try {
+    const key = crypto.createHash("sha256").update(masterKey).digest();
+    const ivBuffer = Buffer.from(iv, "hex");
+    const tagBuffer = Buffer.from(tag, "hex");
+
+    if (ivBuffer.length !== 12) {
+      throw new Error("Invalid IV length for AES-256-GCM (expected 12 bytes)");
+    }
+    if (tagBuffer.length !== 16) {
+      throw new Error("Invalid Auth Tag length for AES-256-GCM (expected 16 bytes)");
+    }
+
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, ivBuffer);
+    decipher.setAuthTag(tagBuffer);
+
+    let decrypted = decipher.update(cipherText, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+  } catch (err: any) {
+    throw new Error(`Decryption failed: ${err.message}`);
+  }
+}
+
