@@ -24,6 +24,7 @@ impl TestEnv {
         let buyer = Address::generate(&env);
         let seller = Address::generate(&env);
         let agent = Address::generate(&env);
+        let treasury = Address::generate(&env);
 
         let token_admin = Address::generate(&env);
         let token_contract_id = env.register_stellar_asset_contract(token_admin.clone());
@@ -34,7 +35,10 @@ impl TestEnv {
         let permissions_contract_id = Address::generate(&env);
 
         let escrow_client = EscrowContractClient::new(&env, &escrow_contract_id);
-        escrow_client.initialize(&admin);
+        let fee_bps = 0u32; // 0% for tests
+        let min_amount = 100i128;
+        let max_amount = 10000i128;
+        escrow_client.initialize(&admin, &fee_bps, &treasury, &min_amount, &max_amount);
 
         TestEnv {
             env,
