@@ -10,8 +10,8 @@ struct TestEnv {
     buyer: Address,
     seller: Address,
     agent: Address,
-    token_contract_id: Address,
-    token_admin: Address,
+    _token_contract_id: Address,
+    _token_admin: Address,
     escrow_contract_id: Address,
     permissions_contract_id: Address,
 }
@@ -27,6 +27,7 @@ impl TestEnv {
         let agent = Address::generate(&env);
 
         let token_admin = Address::generate(&env);
+        #[allow(deprecated)]
         let token_contract_id = env.register_stellar_asset_contract(token_admin.clone());
         let token_admin_client = soroban_sdk::token::StellarAssetClient::new(&env, &token_contract_id);
         token_admin_client.mint(&buyer, &10000);
@@ -43,8 +44,8 @@ impl TestEnv {
             buyer,
             seller,
             agent,
-            token_contract_id,
-            token_admin,
+            _token_contract_id: token_contract_id,
+            _token_admin: token_admin,
             escrow_contract_id,
             permissions_contract_id,
         }
@@ -76,13 +77,13 @@ fn test_permission_checked_before_escrow_fund_fails_exceeding_limit() {
     let escrow_client = EscrowContractClient::new(&t.env, &t.escrow_contract_id);
     let perm_client = PermissionsContractClient::new(&t.env, &t.permissions_contract_id);
 
-    let per_tx_limit = 500i128;
-    let total_limit = 1000i128;
-    let expiry = t.env.ledger().timestamp() + 3600;
+    let limit_total = 1000i128;
+    let limit_per_tx = 500i128;
+    let ttl_ledgers = 36000u32;
     let merchants = Vec::new(&t.env);
 
     // Grant permission
-    perm_client.grant(&t.buyer, &t.agent, &per_tx_limit, &total_limit, &expiry, &merchants);
+    perm_client.grant(&t.buyer, &t.agent, &limit_total, &limit_per_tx, &merchants, &ttl_ledgers);
         
     // Try to spend 600 (exceeds per tx limit 500)
     escrow_client.create_escrow(
@@ -102,13 +103,13 @@ fn test_permission_checked_before_escrow_fund_succeeds() {
     let escrow_client = EscrowContractClient::new(&t.env, &t.escrow_contract_id);
     let perm_client = PermissionsContractClient::new(&t.env, &t.permissions_contract_id);
 
-    let per_tx_limit = 500i128;
-    let total_limit = 1000i128;
-    let expiry = t.env.ledger().timestamp() + 3600;
+    let limit_total = 1000i128;
+    let limit_per_tx = 500i128;
+    let ttl_ledgers = 36000u32;
     let merchants = Vec::new(&t.env);
 
     // Grant permission
-    perm_client.grant(&t.buyer, &t.agent, &per_tx_limit, &total_limit, &expiry, &merchants);
+    perm_client.grant(&t.buyer, &t.agent, &limit_total, &limit_per_tx, &merchants, &ttl_ledgers);
 
     // Fund escrow within limit
     let escrow_id = escrow_client.create_escrow(
@@ -133,14 +134,14 @@ fn test_end_to_end_delegated_purchase() {
     let perm_client = PermissionsContractClient::new(&t.env, &t.permissions_contract_id);
     let token_client = soroban_sdk::token::Client::new(&t.env, &t.token_contract_id);
 
-    let per_tx_limit = 500i128;
-    let total_limit = 1000i128;
-    let expiry = t.env.ledger().timestamp() + 3600;
+    let limit_total = 1000i128;
+    let limit_per_tx = 500i128;
+    let ttl_ledgers = 36000u32;
     let mut merchants = Vec::new(&t.env);
     merchants.push_back(t.seller.clone());
 
     // 1. Grant permission to agent
-    perm_client.grant(&t.buyer, &t.agent, &per_tx_limit, &total_limit, &expiry, &merchants);
+    perm_client.grant(&t.buyer, &t.agent, &limit_total, &limit_per_tx, &merchants, &ttl_ledgers);
 
     // 2. Fund escrow as agent (on behalf of buyer)
     let escrow_id = escrow_client.create_escrow(

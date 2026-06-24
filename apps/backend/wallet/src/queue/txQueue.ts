@@ -24,6 +24,13 @@ let txQueue: Queue | null = null;
 let txWorker: Worker | null = null;
 let queueEvents: QueueEvents | null = null;
 
+export interface LedgerSubmissionCheck {
+  txHash: string;
+  status: "confirmed" | "missing" | "failed";
+  ledger?: number;
+  checkedAt: string;
+}
+
 const QUEUE_NAME = "stellar-tx-queue";
 
 function getStellarConfig() {
@@ -267,6 +274,11 @@ async function executeTxJob(
       retries--;
     }
 
+    const isConfirmed = await verifyLedgerSubmission(txHash);
+    if (isConfirmed) {
+      log.info("Transaction confirmed on ledger despite polling timeout", { txHash });
+      return { hash: txHash, ledger: 0, success: true };
+    }
     throw new Error(`Transaction timeout or status untracked: ${sendRes.status}`);
   } catch (err: any) {
     log.error("Transaction error in worker", { error: err.message });
@@ -334,6 +346,21 @@ async function runTestJob(request: TransactionRequest, connection: Redis): Promi
   testPromiseChain = resultPromise.then(() => {}).catch(() => {});
 
   return resultPromise;
+}
+
+async function verifyLedgerSubmission(hash: string): Promise<boolean> {
+  const { horizonUrl } = getStellarConfig();
+  const horizonServer = new Horizon.Server(horizonUrl);
+
+  try {
+    await horizonServer.transactions().transaction(hash).call();
+    return true;
+  } catch (err: any) {
+    if (err?.response?.status === 404) {
+      return false;
+    }
+    return false;
+  }
 }
 
 export function initQueue() {
