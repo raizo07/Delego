@@ -58,4 +58,18 @@ describe("mapSimulationResult", () => {
     assert.equal(result.success, true);
     assert.equal(result.footprint, undefined);
   });
+
+  it("extracts footprint as base64 XDR when transactionData is present", () => {
+    const xdrBytes = Buffer.from("footprint-xdr");
+    const response = makeSuccessResponse({
+      transactionData: {
+        build() {
+          return { toXDR: () => xdrBytes };
+        },
+      },
+    });
+    const result = mapSimulationResult(response);
+    assert.equal(result.success, true);
+    assert.equal(result.footprint, xdrBytes.toString("base64"));
+  });
 });
