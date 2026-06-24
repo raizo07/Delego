@@ -20,20 +20,23 @@ export function generateId(): string {
   return randomUUID();
 }
 
+// Fix: trim the key before validation so that surrounding whitespace (common during copy-paste) does not cause a valid key to be rejected as invalid_strkey, and return the normalized (trimmed) key
 export function validatePublicKey(key: string): PublicKeyValidationResult {
   if (!key || typeof key !== "string" || key.trim() === "") {
     return { valid: false, error: "missing" };
   }
 
-  if (StrKey.isValidEd25519SecretSeed(key)) {
+  const trimmed = key.trim();
+
+  if (StrKey.isValidEd25519SecretSeed(trimmed)) {
     return { valid: false, error: "secret_key_not_allowed" };
   }
 
-  if (!StrKey.isValidEd25519PublicKey(key)) {
+  if (!StrKey.isValidEd25519PublicKey(trimmed)) {
     return { valid: false, error: "invalid_strkey" };
   }
 
-  return { valid: true, normalized: key };
+  return { valid: true, normalized: trimmed };
 }
 
 export function isValidStellarPublicKey(key: string): boolean {
