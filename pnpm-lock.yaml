@@ -147,6 +147,15 @@ importers:
       '@delego/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      pg-hstore:
+        specifier: ^2.3.4
+        version: 2.3.4
+      sequelize:
+        specifier: ^6.37.8
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
