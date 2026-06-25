@@ -79,7 +79,12 @@ interface RefreshTokenPayload {
 }
 
 function generateAccessToken(userId: string, email: string, roles: string[] = ["user"]): string {
-  return jwt.sign({ userId, email, roles }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRES_IN });
+  const { issuer, audience } = getJwtValidationConfig();
+  return jwt.sign({ userId, email, roles }, JWT_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+    issuer,
+    audience,
+  });
 }
 
 async function generateRefreshToken(userId: string, familyId?: string): Promise<{ refreshToken: string; familyId: string; tokenId: string }> {
@@ -98,10 +103,11 @@ async function generateRefreshToken(userId: string, familyId?: string): Promise<
     expiresAt,
   });
 
+  const { issuer, audience } = getJwtValidationConfig();
   const refreshToken = jwt.sign(
     { tokenId, familyId: family, userId, secret },
     JWT_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    { expiresIn: REFRESH_TOKEN_EXPIRES_IN, issuer, audience }
   );
 
   return { refreshToken, familyId: family, tokenId };
@@ -114,23 +120,22 @@ export async function generateTokens(userId: string, email: string, familyId?: s
   return { accessToken, refreshToken, expiresIn };
 }
 
- #115--Gateway]-Add-JWT-Clock-Skew-Configuration-FIX
 /**
  * Verify an access token. Applies the configured `clockToleranceSeconds`
  * to the `nbf` and `exp` claims so small clock drift between distributed
- * services does not reject otherwise-valid tokens.
+ * services does not reject otherwise-valid tokens. Also enforces the
+ * configured `issuer` and `audience` claims so a token minted by another
+ * party cannot be replayed against the gateway.
  */
 export function verifyToken(
   token: string,
   config: JwtValidationConfig = getJwtValidationConfig()
-): { userId: string } {
+): { userId: string; email?: string; roles?: string[] } {
   const decoded = jwt.verify(token, JWT_SECRET, {
     clockTolerance: config.clockToleranceSeconds,
+    issuer: config.issuer,
+    audience: config.audience,
   });
-
-export function verifyToken(token: string): { userId: string; email?: string; roles?: string[] } {
-  const decoded = jwt.verify(token, JWT_SECRET);
- main
   if (typeof decoded === "object" && decoded !== null && "userId" in decoded) {
     return decoded as { userId: string; email?: string; roles?: string[] };
   }
@@ -143,6 +148,8 @@ function verifyRefreshToken(
 ): RefreshTokenPayload {
   const decoded = jwt.verify(token, JWT_SECRET, {
     clockTolerance: config.clockToleranceSeconds,
+    issuer: config.issuer,
+    audience: config.audience,
   });
   if (
     typeof decoded === "object" &&

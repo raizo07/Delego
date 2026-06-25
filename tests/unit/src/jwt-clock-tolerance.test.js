@@ -14,12 +14,19 @@ const JWT_SECRET = process.env.JWT_SECRET ?? "change-me-in-production";
  * can deterministically simulate just-expired / too-expired / not-before
  * scenarios without relying on real wall-clock waits.
  */
-function signWithClaims({ userId = "test-user", iat, nbf, exp }) {
+function signWithClaims({
+  userId = "test-user",
+  iat,
+  nbf,
+  exp,
+  issuer = "delego-gateway",
+  audience = "delego-clients",
+}) {
   const payload = { userId };
   if (typeof iat === "number") payload.iat = iat;
   if (typeof nbf === "number") payload.nbf = nbf;
   if (typeof exp === "number") payload.exp = exp;
-  return jwt.sign(payload, JWT_SECRET, { noTimestamp: true });
+  return jwt.sign(payload, JWT_SECRET, { noTimestamp: true, issuer, audience });
 }
 
 describe("JWT clock tolerance (nbf / exp validation)", () => {
