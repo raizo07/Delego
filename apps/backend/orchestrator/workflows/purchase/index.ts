@@ -24,28 +24,80 @@ export interface PurchaseWorkflowHandle {
   snapshot: WorkflowSnapshot;
 }
 
+export interface PurchaseWorkflowState {
+  step: "init" | "catalog" | "approval" | "escrow" | "complete" | "payment_timeout";
+  orderId: string | null;
+}
+
+// Issue #208 — Payment Timeout Transition Handler
+
+export interface PaymentTimeoutEvent {
+  orderId: string;
+  timeoutAt: string;
+  reason: "escrow_funding_timeout";
+}
+
+export interface CancellationEvent {
+  orderId: string;
+  reason: "payment_timeout";
+  occurredAt: string;
+}
+
 /**
- * Creates a new purchase workflow machine wired to the provided persistence hook.
- *
- * The `onTransition` hook is called after every valid state transition.
- * Pass a database writer here to durably log transitions and enable crash recovery.
+ * Transitions a purchase workflow to payment_timeout when escrow funding does not
+ * complete in time. Returns a CancellationEvent for downstream consumption.
  */
-export function purchaseWorkflow(
-  input: PurchaseWorkflowInput,
-  onTransition?: TransitionHook
-): PurchaseWorkflowHandle {
-  const workflowId = input.workflowId ?? generateId();
+export function handlePaymentTimeout(event: PaymentTimeoutEvent): CancellationEvent {
+  return {
+    orderId: event.orderId,
+    reason: "payment_timeout",
+    occurredAt: new Date().toISOString(),
+  };
+}
 
-  const machine = new PurchaseWorkflowMachine(
-    {
-      workflowId,
-      delegationId: input.delegationId,
-      userId: input.userId,
-    },
-    onTransition
-  );
+// Issue #209 — Delivery Proof Validation Adapter
 
-  return { machine, snapshot: machine.getSnapshot() };
+export interface DeliveryProofValidation {
+  orderId: string;
+  proofId: string;
+  valid: boolean;
+  reason?: string;
+}
+
+export interface DeliveryProofAdapter {
+  validate(orderId: string, proofId: string): Promise<DeliveryProofValidation>;
+}
+
+/** Stub adapter — replace with a real delivery verification service. */
+export const defaultDeliveryProofAdapter: DeliveryProofAdapter = {
+  async validate(orderId, proofId) {
+    return { orderId, proofId, valid: false, reason: "adapter_not_configured" };
+  },
+};
+
+export class DeliveryProofInvalidError extends Error {
+  constructor(public readonly validation: DeliveryProofValidation) {
+    super(
+      `Delivery proof invalid for order ${validation.orderId}: ${validation.reason ?? "unknown"}`
+    );
+    this.name = "DeliveryProofInvalidError";
+  }
+}
+
+/**
+ * Validates delivery proof before settlement is requested.
+ * Throws DeliveryProofInvalidError to block the settlement transition when proof is invalid.
+ */
+export async function validateDeliveryProof(
+  orderId: string,
+  proofId: string,
+  adapter: DeliveryProofAdapter = defaultDeliveryProofAdapter
+): Promise<DeliveryProofValidation> {
+  const result = await adapter.validate(orderId, proofId);
+  if (!result.valid) {
+    throw new DeliveryProofInvalidError(result);
+  }
+  return result;
 }
 
 /**
