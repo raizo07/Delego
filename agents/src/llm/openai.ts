@@ -59,13 +59,14 @@ export class OpenAIClient implements LLMClient {
       temperature: options.temperature ?? 0.7,
     };
 
-    const response = await this.requestWithRetry(
+    const response = (await this.requestWithRetry(
       "https://api.openai.com/v1/chat/completions",
       body
-    ) as OpenAIChatCompletionResponse;
+    )) as any;
 
-    const inputTokens: number = response.usage?.prompt_tokens ?? 0;
-    const outputTokens: number = response.usage?.completion_tokens ?? 0;
+    const usage = response.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
+    const inputTokens: number = usage?.prompt_tokens ?? 0;
+    const outputTokens: number = usage?.completion_tokens ?? 0;
     const totalTokens = inputTokens + outputTokens;
 
     if (options.tokenBudget && totalTokens > options.tokenBudget) {
@@ -74,7 +75,8 @@ export class OpenAIClient implements LLMClient {
       );
     }
 
-    const choice = response.choices?.[0];
+    const choices = response.choices as Array<{ message?: { content?: string }; finish_reason?: string }> | undefined;
+    const choice = choices?.[0];
     return {
       provider: "openai",
       model,
