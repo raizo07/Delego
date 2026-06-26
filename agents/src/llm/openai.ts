@@ -44,10 +44,10 @@ export class OpenAIClient implements LLMClient {
       temperature: options.temperature ?? 0.7,
     };
 
-    const response = await this.requestWithRetry(
+    const response = (await this.requestWithRetry(
       "https://api.openai.com/v1/chat/completions",
       body
-    );
+    )) as any;
 
     const inputTokens: number = response.usage?.prompt_tokens ?? 0;
     const outputTokens: number = response.usage?.completion_tokens ?? 0;
