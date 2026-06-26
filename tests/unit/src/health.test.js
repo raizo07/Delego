@@ -39,20 +39,6 @@ describe("Gateway Health Endpoint Tests", () => {
   });
 
   describe("Health response structure", () => {
-    it("should round latency to nearest millisecond", () => {
-      const testCases = [
-        { input: 12.345, expected: 12 },
-        { input: 45.789, expected: 46 },
-        { input: 100.5, expected: 101 },
-        { input: 0.123, expected: 0 },
-        { input: 1.5, expected: 2 },
-      ];
-
-      for (const { input, expected } of testCases) {
-        assert.equal(Math.round(input), expected);
-      }
-    });
-
     it("should have correct successful response structure", () => {
       const response = {
         data: {
@@ -78,28 +64,6 @@ describe("Gateway Health Endpoint Tests", () => {
       assert.ok(response.data.timestamp);
       assert.ok(Array.isArray(response.data.dependencies));
       assert.equal(response.error, null);
-    });
-
-    it("should have degraded overall status when any dependency fails", () => {
-      const dependencies = [
-        { name: "postgresql", status: "degraded", latencyMs: 0 },
-      ];
-
-      const hasFailure = dependencies.some((dep) => dep.status === "degraded");
-      const overallStatus = hasFailure ? "degraded" : "ok";
-
-      assert.equal(overallStatus, "degraded");
-    });
-
-    it("should have ok overall status when all dependencies are healthy", () => {
-      const dependencies = [
-        { name: "postgresql", status: "ok", latencyMs: 15 },
-      ];
-
-      const hasFailure = dependencies.some((dep) => dep.status === "degraded");
-      const overallStatus = hasFailure ? "degraded" : "ok";
-
-      assert.equal(overallStatus, "ok");
     });
 
     it("should generate valid ISO 8601 timestamp", () => {
@@ -144,7 +108,7 @@ describe("Gateway Health Endpoint Tests", () => {
       assert.equal(typeof healthModule.healthHandler, "function");
     });
 
-    it("should handle mock successful database check", async () => {
+    it("should handle database check and return proper response structure", async () => {
       // Create a minimal mock response object
       let capturedStatus = null;
       let capturedBody = null;
@@ -177,6 +141,8 @@ describe("Gateway Health Endpoint Tests", () => {
       assert.ok(["ok", "degraded"].includes(dbDep.status));
       assert.equal(typeof dbDep.latencyMs, "number");
       assert.ok(dbDep.latencyMs >= 0);
+      // Verify latency is an integer (rounded)
+      assert.equal(dbDep.latencyMs, Math.floor(dbDep.latencyMs));
     });
 
     it("should return 200 status even when database is degraded", async () => {

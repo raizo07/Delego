@@ -37,10 +37,12 @@ export async function connectDb(): Promise<void> {
  */
 export async function checkDatabaseHealth(timeoutMs: number = 5000): Promise<number> {
   const startTime = performance.now();
+  let timeoutId: NodeJS.Timeout | null = null;
+  
   try {
     const queryPromise = sequelize.query("SELECT 1", { raw: true });
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error("Database health check timeout")), timeoutMs);
+      timeoutId = setTimeout(() => reject(new Error("Database health check timeout")), timeoutMs);
     });
     
     await Promise.race([queryPromise, timeoutPromise]);
@@ -49,6 +51,10 @@ export async function checkDatabaseHealth(timeoutMs: number = 5000): Promise<num
   } catch (err) {
     log.warn("Database health check failed", err instanceof Error ? { error: err.message } : { error: String(err) });
     throw err;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
