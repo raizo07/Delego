@@ -22,5 +22,7 @@ startHttpServer({
 
 // Export workflows and state machine for internal use (issue #7)
 export { purchaseWorkflow, restorePurchaseWorkflow } from "../workflows/purchase/index.js";
+export { publishWorkflowEvent, createWorkflowCorrelationId } from "./workflow-events.js";
+export type { WorkflowEventEnvelope } from "./workflow-events.js";
 export { PurchaseWorkflowMachine } from "../state/index.js";
 export type { WorkflowSnapshot, PurchaseState, PurchaseEvent } from "../state/index.js";

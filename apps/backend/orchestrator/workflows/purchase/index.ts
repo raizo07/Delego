@@ -10,7 +10,7 @@ import type {
   WorkflowSnapshot,
   TransitionHook,
 } from "../../state/index.js";
-import { randomUUID } from "node:crypto";
+import { generateId } from "@delego/utils";
 
 export interface PurchaseWorkflowInput {
   delegationId: string;
@@ -136,3 +136,12 @@ export function restorePurchaseWorkflow(
   return { machine, snapshot: machine.getSnapshot() };
 }
 
+export {
+  lookupOrderPaymentStatus,
+  createHttpOrderLookupAdapter,
+  createHttpOrderLookupClient,
+  defaultOrderLookupAdapter,
+  OrderPaymentNotFoundError,
+  type OrderPaymentStatus,
+  type OrderLookupAdapter,
+} from "./order-lookup.js";

@@ -12,6 +12,12 @@
 
 import { createRequire } from "node:module";
 import { createLogger } from "@delego/utils";
+import {
+  InMemoryProcessedContractEventStore,
+  processEscrowContractEvent,
+  type EscrowContractEvent,
+  type ProcessedContractEventStore,
+} from "./dedup-store.js";
 
 const log = createLogger("payments:events", process.env.LOG_LEVEL ?? "info");
 
@@ -53,6 +59,18 @@ export interface PaymentEvent<T = unknown> {
 // ---------------------------------------------------------------------------
 
 const STREAM_KEY = "payments:events";
+
+let processedEventStore: ProcessedContractEventStore =
+  new InMemoryProcessedContractEventStore();
+
+/** Swap the backing store for a DB-backed implementation in production. */
+export function setProcessedContractEventStore(store: ProcessedContractEventStore): void {
+  processedEventStore = store;
+}
+
+export function resetProcessedContractEventStore(): void {
+  processedEventStore = new InMemoryProcessedContractEventStore();
+}
 
 // ---------------------------------------------------------------------------
 // Internal: lazy Redis client factory
@@ -180,3 +198,35 @@ export function emitPaymentEvent(event: {
     })
   );
 }
+
+/**
+ * Handles on-chain escrow contract events with deduplication.
+ * Duplicate blockchain deliveries are skipped after the first successful process.
+ *
+ * Backed by `processed_contract_events` (see database/migrations/004_processed_contract_events.sql).
+ */
+export async function handleEscrowContractEvent(
+  event: EscrowContractEvent,
+  onProcess: (paymentEvent: PaymentEvent<Record<string, unknown>>) => Promise<void> | void
+): Promise<boolean> {
+  return processEscrowContractEvent(
+    event,
+    async (contractEvent) => {
+      await onProcess({
+        type: contractEvent.type,
+        orderId: String(contractEvent.payload.orderId ?? ""),
+        payload: contractEvent.payload,
+        occurredAt: new Date().toISOString(),
+      });
+    },
+    processedEventStore
+  );
+}
+
+export {
+  deriveContractEventId,
+  InMemoryProcessedContractEventStore,
+  processEscrowContractEvent,
+  type EscrowContractEvent,
+  type ProcessedContractEventStore,
+} from "./dedup-store.js";
