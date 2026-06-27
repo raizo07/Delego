@@ -10,5 +10,14 @@ pnpm --filter @delego/wallet dev
 
 Health check: `GET http://localhost:3012/health`
 
-Validation: this service verifies Stellar public keys (StrKey) at route boundaries
-and will reject malformed or secret keys with HTTP 400 before processing.
+## Public Key Validation
+
+This service uses `@delego/utils` to validate Stellar public keys at route boundaries.
+
+| Export | Purpose |
+|---|---|
+| `validatePublicKey(key)` | Returns `{ valid, normalized?, error? }` — trims whitespace, rejects secret seeds (`S...`), validates Ed25519 public key (`G...`) |
+| `isValidStellarPublicKey(key)` | Boolean shorthand for `validatePublicKey(key).valid` |
+| `validatePublicKeyMiddleware(paramName)` | Express middleware that validates a route param and responds with HTTP 400 on failure |
+
+Malformed keys and secret keys are rejected before processing.
