@@ -36,7 +36,6 @@
     "pg": "^8.21.0"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^15.1.0",
-    "vitest": "^4.1.9"
+    "@stellar/stellar-sdk": "^15.1.0"
   }
 }
