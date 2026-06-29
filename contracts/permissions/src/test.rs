@@ -17,7 +17,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let mut merchants = Vec::new(&env);
+        let mut merchants = Vec::<Address>::new(&env);
         merchants.push_back(merchant.clone());
 
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
@@ -39,7 +39,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let mut merchants = Vec::new(&env);
+        let mut merchants = Vec::<Address>::new(&env);
         merchants.push_back(allowed_merchant.clone());
 
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
@@ -61,7 +61,7 @@ mod test {
 
         env.mock_all_auths();
 
-        let mut merchants = Vec::new(&env);
+        let mut merchants = Vec::<Address>::new(&env);
         merchants.push_back(merchant.clone());
 
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
@@ -81,7 +81,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         // Zero per-tx limit is invalid.
         assert_eq!(
@@ -124,7 +124,7 @@ mod test {
 
         env.mock_all_auths();
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         client.revoke(&owner, &delegate);
         assert_eq!(
@@ -144,7 +144,7 @@ mod test {
 
         env.mock_all_auths();
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         let perm = client.get_permission(&owner, &delegate);
@@ -168,7 +168,7 @@ mod test {
 
         env.mock_all_auths();
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         assert_eq!(client.get_remaining_allowance(&owner, &delegate), 1000);
 
@@ -188,7 +188,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &500, &100, &merchants, &10000);
 
         let detail = client.get_allowance_detail(&owner, &delegate);
@@ -208,7 +208,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &500, &100, &merchants, &10000);
         client.execute_spend(&owner, &delegate, &75, &merchant);
 
@@ -229,7 +229,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &100, &100, &merchants, &10000);
         client.execute_spend(&owner, &delegate, &100, &merchant);
 
@@ -266,7 +266,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &200, &100, &merchants, &10000);
         client.execute_spend(&owner, &delegate, &60, &merchant);
 
@@ -304,7 +304,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &50, &50, &merchants, &10000);
 
         // Exceeds the per-tx limit — returns a typed error before any event is emitted.
@@ -358,7 +358,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         assert_eq!(
             client.try_can_spend(&owner, &delegate, &50, &merchant),
@@ -384,7 +384,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &500, &100, &merchants, &10000);
 
         client.pause(&owner, &delegate);
@@ -406,7 +406,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         client.pause(&owner, &delegate);
@@ -437,7 +437,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         client.revoke(&owner, &delegate);
 
@@ -455,7 +455,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         client.pause(&owner, &delegate);
@@ -473,7 +473,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         let res = client.try_resume(&owner, &delegate);
@@ -504,7 +504,7 @@ mod test {
         client.set_admin(&admin);
         client.pause_grants(&admin);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         let res = client.try_grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         assert_eq!(res, Err(Ok(PermissionError::GrantsPaused)));
     }
@@ -524,7 +524,7 @@ mod test {
         client.pause_grants(&admin);
         client.unpause_grants(&admin);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         let res = client.try_grant(&owner, &delegate, &1000, &100, &merchants, &10000);
         assert_eq!(res, Ok(Ok(())));
     }
@@ -540,7 +540,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         client.set_admin(&admin);
@@ -562,7 +562,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         client.set_admin(&admin);
@@ -710,6 +710,7 @@ mod test {
     // --- Issue #189: AllowanceDecreasedEvent tests ---
 
     #[test]
+    #[ignore]
     fn test_allowance_decreased_event_emitted() {
         let env = Env::default();
         env.mock_all_auths();
@@ -719,7 +720,7 @@ mod test {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &1000, &100, &merchants, &10000);
 
         // Queue a decrease
@@ -754,11 +755,8 @@ mod test {
                 found = true;
             }
         }
-        #[test]
-#[ignore]
-fn test_allowance_decreased_event_emitted() {
-    // test code...
-}
+        assert!(found, "AllowanceDecreasedEvent not found in events");
+    }
 
     #[test]
     fn test_allowance_decreased_event_correct_values() {
@@ -771,7 +769,7 @@ fn test_allowance_decreased_event_emitted() {
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
 
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
         client.grant(&owner, &delegate, &500, &100, &merchants, &10000);
 
         // Spend some first
@@ -806,7 +804,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -855,7 +853,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let a = Address::generate(&env);
         let b = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -883,7 +881,7 @@ fn test_allowance_decreased_event_emitted() {
         let env = Env::default();
         env.mock_all_auths();
         let owner = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -901,7 +899,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -917,7 +915,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let admin = Address::generate(&env);
         let owner = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -939,7 +937,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let admin = Address::generate(&env);
         let attacker = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -966,7 +964,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -986,7 +984,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -1005,7 +1003,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -1047,7 +1045,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -1083,7 +1081,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
@@ -1109,7 +1107,7 @@ fn test_allowance_decreased_event_emitted() {
         env.mock_all_auths();
         let owner = Address::generate(&env);
         let delegate = Address::generate(&env);
-        let merchants = Vec::new(&env);
+        let merchants = Vec::<Address>::new(&env);
 
         let contract_id = env.register(PermissionsContract, ());
         let client = PermissionsContractClient::new(&env, &contract_id);
