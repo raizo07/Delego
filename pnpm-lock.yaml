@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  axios: '>=1.16.0'
+
 importers:
 
   .:
@@ -104,6 +107,9 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.19.21)
 
   apps/backend/notifications:
     dependencies:
@@ -122,6 +128,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
+      pg:
+        specifier: ^8.11.0
+        version: 8.21.0
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
@@ -134,7 +143,10 @@ importers:
         version: 9.0.10
       '@types/node':
         specifier: ^22.0.0
-        version: 22.20.0
+        version: 22.19.21
+      '@types/pg':
+        specifier: ^8.11.0
+        version: 8.20.0
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
@@ -159,6 +171,15 @@ importers:
       '@delego/utils':
         specifier: workspace:*
         version: link:../../../packages/utils
+      pg:
+        specifier: ^8.21.0
+        version: 8.21.0
+      pg-hstore:
+        specifier: ^2.3.4
+        version: 2.3.4
+      sequelize:
+        specifier: ^6.37.8
+        version: 6.37.8(pg-hstore@2.3.4)(pg@8.21.0)
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -184,6 +205,9 @@ importers:
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
+      ioredis:
+        specifier: ^5.11.1
+        version: 5.11.1
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -243,6 +267,9 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.19.21)
 
   apps/frontend:
     dependencies:
@@ -318,6 +345,10 @@ importers:
         version: 5.9.3
 
   packages/utils:
+    dependencies:
+      '@stellar/stellar-sdk':
+        specifier: ^15.1.0
+        version: 15.1.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -343,6 +374,9 @@ importers:
       '@stellar/stellar-sdk':
         specifier: ^15.1.0
         version: 15.1.0
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
 
 packages:
 
@@ -1159,6 +1193,9 @@ packages:
   '@types/node@25.9.4':
     resolution: {integrity: sha512-dszCsrKb5U7ZsVZBWiHFklTloVl0mSEnWH/iZXfZUlI4rzCUnsvGmgqfuVRHL54ugE7/wRuxEIXRa2iMZ+BG6g==}
 
+  '@types/pg@8.20.0':
+    resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
+
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -1252,8 +1289,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.15.0:
-    resolution: {integrity: sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==}
+  axios@1.18.1:
+    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
 
   axios@1.18.1:
     resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
@@ -2771,7 +2808,7 @@ snapshots:
   '@stellar/stellar-sdk@15.1.0':
     dependencies:
       '@stellar/stellar-base': 15.0.0
-      axios: 1.15.0
+      axios: 1.18.1
       bignumber.js: 9.3.1
       commander: 14.0.3
       eventsource: 2.0.2
@@ -2781,6 +2818,7 @@ snapshots:
       urijs: 1.19.11
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -2814,6 +2852,12 @@ snapshots:
   '@types/node@25.9.4':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/pg@8.20.0':
+    dependencies:
+      '@types/node': 25.9.3
+      pg-protocol: 1.14.0
+      pg-types: 2.2.0
 
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:
@@ -2915,13 +2959,15 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.15.0:
+  axios@1.18.1:
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.6
+      https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   axios@1.18.1:
     dependencies:

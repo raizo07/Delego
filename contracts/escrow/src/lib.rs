@@ -4,7 +4,7 @@
 
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env,
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env, Symbol,
 };
 
 #[contracttype]
@@ -95,6 +95,29 @@ pub struct AdminTransferCancelledEvent {
 }
 
 #[contracttype]
+#[derive(Clone, Debug)]
+pub struct EscrowPauseChangedEvent {
+    pub paused: bool,
+    pub admin: Address,
+    pub ledger: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowPauseState {
+    pub create_paused: bool,
+    pub updated_by: Address,
+    pub updated_at_ledger: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowTokenView {
+    pub escrow_id: u64,
+    pub token: Address,
+}
+
+#[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FeeConfig {
     /// Fee in basis points (e.g., 250 = 2.5%)
@@ -137,6 +160,7 @@ pub enum DataKey {
     DisputeVotes(u64),
     TokenWhitelist,
     TokenEnabled(Address),
+    PauseState,
 }
 
 #[contracterror]
@@ -189,6 +213,17 @@ pub enum EscrowError {
     QuorumConfigNotSet = 24,
     /// Conflicting quorum outcomes
     ConflictingQuorum = 25,
+    /// New escrow creation is currently paused by admin
+    CreationPaused = 26,
+}
+
+/// Refund eligibility result returned by `get_refund_eligibility` (issue #173).
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RefundEligibility {
+    pub escrow_id: u64,
+    pub eligible: bool,
+    pub reason: Symbol,
 }
 
 #[contract]
@@ -557,6 +592,16 @@ impl EscrowContract {
         timeout_ledgers: u32,
     ) -> Result<u64, EscrowError> {
         buyer.require_auth();
+
+        if let Some(pause_state) = env
+            .storage()
+            .instance()
+            .get::<DataKey, EscrowPauseState>(&DataKey::PauseState)
+        {
+            if pause_state.create_paused {
+                return Err(EscrowError::CreationPaused);
+            }
+        }
 
         if !Self::is_token_allowed(env.clone(), token.clone()) {
             return Err(EscrowError::TokenNotWhitelisted);
@@ -981,7 +1026,147 @@ impl EscrowContract {
         Ok(true)
     }
 
+    /// Set or clear the admin pause flag for new escrow creation. Admin-only.
+    pub fn set_create_paused(
+        env: Env,
+        admin: Address,
+        paused: bool,
+    ) -> Result<bool, EscrowError> {
+        admin.require_auth();
+        if !Self::is_admin(env.clone(), admin.clone()) {
+            return Err(EscrowError::Unauthorized);
+        }
+        let pause_state = EscrowPauseState {
+            create_paused: paused,
+            updated_by: admin.clone(),
+            updated_at_ledger: env.ledger().sequence(),
+        };
+        env.storage()
+            .instance()
+            .set(&DataKey::PauseState, &pause_state);
+        env.events().publish(
+            (symbol_short!("escrow"), symbol_short!("paused")),
+            EscrowPauseChangedEvent {
+                paused,
+                admin,
+                ledger: env.ledger().sequence(),
+            },
+        );
+        Ok(true)
+    }
+
+    /// Get the current escrow creation pause state.
+    pub fn get_create_paused(env: Env) -> bool {
+        env.storage()
+            .instance()
+            .get::<DataKey, EscrowPauseState>(&DataKey::PauseState)
+            .map(|s| s.create_paused)
+            .unwrap_or(false)
+    }
+
+    /// Get the token address associated with an escrow.
+    pub fn get_token(env: Env, escrow_id: u64) -> Result<EscrowTokenView, EscrowError> {
+        let key = DataKey::Escrow(escrow_id);
+        let record: EscrowRecord = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .ok_or(EscrowError::NotFound)?;
+        Ok(EscrowTokenView {
+            escrow_id,
+            token: record.token,
+        })
+    }
+
     /// Returns true if the address is the primary admin or a co-admin.
+    /// Read-only check: returns whether the given caller is eligible to refund
+    /// the specified escrow, and a machine-readable reason symbol (issue #173).
+    ///
+    /// Reason symbols (≤7 chars for `symbol_short!` compat):
+    ///   `ok`       — caller may refund right now
+    ///   `notfund`  — escrow not found
+    ///   `released` — already released (terminal)
+    ///   `refunded` — already refunded (terminal)
+    ///   `disputed` — escrow is under dispute
+    ///   `noauth`   — caller is not buyer/seller/admin
+    ///   `timeout`  — buyer must wait for timeout
+    pub fn get_refund_eligibility(
+        env: Env,
+        escrow_id: u64,
+        caller: Address,
+    ) -> RefundEligibility {
+        let key = DataKey::Escrow(escrow_id);
+        let record: EscrowRecord = match env.storage().persistent().get(&key) {
+            Some(rec) => rec,
+            None => {
+                return RefundEligibility {
+                    escrow_id,
+                    eligible: false,
+                    reason: symbol_short!("notfund"),
+                };
+            }
+        };
+
+        // Terminal states
+        if record.status == EscrowStatus::Released {
+            return RefundEligibility {
+                escrow_id,
+                eligible: false,
+                reason: symbol_short!("released"),
+            };
+        }
+        if record.status == EscrowStatus::Refunded {
+            return RefundEligibility {
+                escrow_id,
+                eligible: false,
+                reason: symbol_short!("refunded"),
+            };
+        }
+        if record.status == EscrowStatus::Disputed {
+            return RefundEligibility {
+                escrow_id,
+                eligible: false,
+                reason: symbol_short!("disputed"),
+            };
+        }
+
+        // Must be Funded at this point
+        let is_seller = caller == record.seller;
+        let is_buyer = caller == record.buyer;
+        let is_admin = Self::is_admin(env.clone(), caller.clone());
+
+        if is_seller || is_admin {
+            return RefundEligibility {
+                escrow_id,
+                eligible: true,
+                reason: symbol_short!("ok"),
+            };
+        }
+
+        if is_buyer {
+            let timeout_reached = env.ledger().sequence() >= record.timeout_ledger;
+            if timeout_reached {
+                return RefundEligibility {
+                    escrow_id,
+                    eligible: true,
+                    reason: symbol_short!("ok"),
+                };
+            } else {
+                return RefundEligibility {
+                    escrow_id,
+                    eligible: false,
+                    reason: symbol_short!("timeout"),
+                };
+            }
+        }
+
+        RefundEligibility {
+            escrow_id,
+            eligible: false,
+            reason: symbol_short!("noauth"),
+        }
+    }
+
     pub fn is_admin(env: Env, address: Address) -> bool {
         let primary_admin: Address = match env.storage().instance().get(&DataKey::Admin) {
             Some(addr) => addr,
