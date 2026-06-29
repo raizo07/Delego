@@ -758,7 +758,7 @@ mod test {
         #[test]
 #[ignore]
 fn test_allowance_decreased_event_emitted() {
-    }
+    
 
     #[test]
     fn test_allowance_decreased_event_correct_values() {
