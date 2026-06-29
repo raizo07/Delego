@@ -498,11 +498,11 @@ impl PermissionsContract {
         env.storage().persistent().remove(&pend_key);
 
         env.events().publish(
-            (symbol_short!("perm"), symbol_short!("dec_allow")),
-            DecrementExecutedEvent {
+            (symbol_short!("perm"), symbol_short!("allowdec")),
+            AllowanceDecreasedEvent {
                 owner,
                 delegate,
-                previous_limit,
+                old_limit: previous_limit,
                 new_limit,
             },
         );
